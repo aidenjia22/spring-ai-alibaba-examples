@@ -78,4 +78,34 @@ public class StuffController {
 				.stream().content();
 	}
 
+	@Value("classpath:/docs/fan-zhendong-career.md")
+	private Resource carreerResource;
+
+
+	@GetMapping(value = "/answer_with-stuff")
+	public Flux<String> answer(
+			@RequestParam(
+					value = "message",
+					required = false,
+					defaultValue = "Which athletes won the mixed doubles gold medal in curling at the 2022 Winter Olympics?'") String message,
+			@RequestParam(value = "stuffit", defaultValue = "false") boolean stuffit
+	) {
+
+		PromptTemplate promptTemplate = new PromptTemplate(qaPromptResource);
+
+		Map<String, Object> map = new HashMap<>();
+		map.put("question", message);
+		//填充prompt 上下文，以增强大模型回答。
+		if (stuffit) {
+			map.put("context", carreerResource);
+		}
+		else {
+			map.put("context", "");
+		}
+		return chatClient.prompt(promptTemplate.create(map))
+				.stream().content();
+	}
+
+
+
 }
