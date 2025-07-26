@@ -16,6 +16,8 @@
 package com.alibaba.cloud.ai.toolcall.config;
 
 import com.alibaba.cloud.ai.toolcall.component.AddressInformationTools;
+import com.alibaba.cloud.ai.toolcall.component.BaiduSearchService;
+import com.alibaba.cloud.ai.toolcall.component.SearchTools;
 import com.alibaba.cloud.ai.toolcall.component.TimeTools;
 import com.alibaba.cloud.ai.toolcalling.baidumap.BaiduMapSearchInfoService;
 import com.alibaba.cloud.ai.toolcalling.time.*;
@@ -42,6 +44,11 @@ public class ToolCallAutoConfiguration {
     @Bean
     public AddressInformationTools addressInformationTools(BaiduMapSearchInfoService service) {
         return new AddressInformationTools(service);
+    }
+
+    @Bean
+    public SearchTools searchTools(BaiduSearchService baiduSearchService) {
+        return new SearchTools(baiduSearchService);
     }
 
     @Bean
