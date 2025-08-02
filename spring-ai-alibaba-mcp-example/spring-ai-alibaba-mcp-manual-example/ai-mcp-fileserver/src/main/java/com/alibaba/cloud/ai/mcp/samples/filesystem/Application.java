@@ -35,12 +35,12 @@ public class Application {
 			System.out.println("Running predefined questions with AI model responses:\n");
 
 			// Question 1
-			String question1 = "Can you explain the content of the target/spring-ai-mcp-overview.txt file?";
+			String question1 = "Can you explain the content of the D:\\workspace\\spring-ai-alibaba-examples\\spring-ai-alibaba-mcp-example\\spring-ai-alibaba-mcp-manual-example\\ai-mcp-fileserver\\target\\spring-ai-mcp-overview.txt file?";
 			System.out.println("QUESTION: " + question1);
 			System.out.println("ASSISTANT: " + chatClient.prompt(question1).call().content());
 
 			// Question 2
-			String question2 = "Pleses summarize the content of the target/spring-ai-mcp-overview.txt file and store it a new target/summary.md as Markdown format?";
+			String question2 = "Pleses summarize the content of the D:\\workspace\\spring-ai-alibaba-examples\\spring-ai-alibaba-mcp-example\\spring-ai-alibaba-mcp-manual-example\\ai-mcp-fileserver\\target\\spring-ai-mcp-overview.txt file and store it a new target/summary.md as Markdown format?";
 			System.out.println("\nQUESTION: " + question2);
 			System.out.println("ASSISTANT: " +
 					chatClient.prompt(question2).call().content());
@@ -56,8 +56,8 @@ public class Application {
 		// based on
 		// https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem
 		// Windows 系统需要改为 npx.cmd
-		var stdioParams = ServerParameters.builder("npx")
-				.args("-y", "@modelcontextprotocol/server-filesystem", getDbPath())
+		var stdioParams = ServerParameters.builder("npx.cmd")
+				.args("-y", "@modelcontextprotocol/server-filesystem",getDbPath())
 				.build();
 
 		var mcpClient = McpClient.sync(new StdioClientTransport(stdioParams))
@@ -75,9 +75,8 @@ public class Application {
 
 		// spring-ai-alibaba-examples/spring-ai-alibaba-mcp-example/spring-ai-alibaba-manual-mcp-example/ai-mcp-fileserver/target
 		// windows use: spring-ai-alibaba-mcp-example/spring-ai-alibaba-manual-mcp-example/ai-mcp-fileserver/target
-		String path = Paths.get(System.getProperty("user.dir"), "spring-ai-alibaba-mcp-example/spring-ai-alibaba-manual-mcp-example/ai-mcp-fileserver/target").toString();
+		String path = Paths.get("D:\\workspace\\spring-ai-alibaba-examples\\spring-ai-alibaba-mcp-example\\spring-ai-alibaba-mcp-manual-example\\ai-mcp-fileserver\\target").toString();
 		System.out.println(path);
-
 		return path;
 	}
 
