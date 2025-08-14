@@ -9,11 +9,9 @@ server:
 spring:
   application:
     name: mcp
-  main:
-    web-application-type: none
   ai:
     dashscope:
-      api-key: sk-f48466cf0ae84a3ead60ffc6a823e1fb
+      api-key: hhhh
     mcp:
       client:
         toolcallback:
@@ -32,7 +30,3 @@ logging:
       modelcontextprotocol:
         client: DEBUG
         spec: DEBUG
-
-ai:
-  user:
-    input: 北京的天气如何？

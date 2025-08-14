@@ -5,11 +5,11 @@ spring:
         baidu:
           translate:
             enabled: true
-            app-id: ${BAIDU_TRANSLATE_APP_ID}
-            secret-key: ${BAIDU_TRANSLATE_SECRET_KEY}
+            app-id: 20250719002410841
+            secret-key: qOrul24H1s3SJNv4HGiT
           map:
             enabled: true
-            apiKey: ${BAIDU_MAP_API_KEY}
+            apiKey: 090dBBVCmW24VWOhqksHuyclbX5snMzy
 
         time:
           enabled: true
@@ -19,4 +19,4 @@ spring:
           api-key: ${WEATHER_API_KEY}
 
     dashscope:
-      api-key: ${AI_DASHSCOPE_API_KEY}
+      api-key: sk-f48466cf0ae84a3ead60ffc6a823e1fb

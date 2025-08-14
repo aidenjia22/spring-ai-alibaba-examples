@@ -1,0 +1,4 @@
+This is a sample file for testing MCP file reading functionality.
+It contains some sample text to verify that the file reading mechanism works correctly.
+
+The content of this file should be read by the MCP client and processed by the AI model.

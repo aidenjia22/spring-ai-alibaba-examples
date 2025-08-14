@@ -13,7 +13,7 @@
 # limitations under the License.
 
 server:
-  port: 10007
+  port: 8080
 
 spring:
   application:
@@ -21,5 +21,5 @@ spring:
 
   ai:
     dashscope:
-      api-key: ${AI_DASHSCOPE_API_KEY}
+      api-key: sk-f48466cf0ae84a3ead60ffc6a823e1fb
       
