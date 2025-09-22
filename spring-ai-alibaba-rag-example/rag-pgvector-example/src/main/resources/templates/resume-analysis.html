@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历分析 - 简历分析系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <h1><i class="fas fa-file-alt"></i> 简历分析系统</h1>
+            <nav class="nav">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i> 首页
+                </a>
+                <a href="/resume" class="nav-link active">
+                    <i class="fas fa-search"></i> 简历分析
+                </a>
+                <a href="/management" class="nav-link">
+                    <i class="fas fa-list"></i> 简历管理
+                </a>
+                <a href="/jobs" class="nav-link">
+                    <i class="fas fa-briefcase"></i> 岗位管理
+                </a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <!-- 简历上传区域 -->
+            <section class="upload-section">
+                <div class="upload-card">
+                    <h2><i class="fas fa-cloud-upload-alt"></i> 上传简历</h2>
+                    
+                    <!-- 文件上传 -->
+                    <div class="upload-method">
+                        <h3>方式一：文件上传</h3>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <i class="fas fa-file-upload"></i>
+                            <p>拖拽文件至此处或点击选择文件</p>
+                            <p class="file-info">支持格式：PDF、DOC、DOCX、TXT（最大10MB）</p>
+                            <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                            <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
+                                选择文件
+                            </button>
+                        </div>
+                        
+                        <div class="candidate-name-input">
+                            <label for="candidateName">候选人姓名（可选）:</label>
+                            <input type="text" id="candidateName" placeholder="请输入候选人姓名">
+                        </div>
+                        
+                        <button class="btn-upload" id="uploadBtn" onclick="uploadFile()" disabled>
+                            <i class="fas fa-upload"></i> 上传并分析
+                        </button>
+                    </div>
+
+                    <!-- 文本输入 -->
+                    <div class="upload-method">
+                        <h3>方式二：直接输入</h3>
+                        <div class="text-input-area">
+                            <textarea id="resumeText" placeholder="请粘贴简历内容..." rows="10"></textarea>
+                            <div class="candidate-name-input">
+                                <label for="candidateNameText">候选人姓名（可选）:</label>
+                                <input type="text" id="candidateNameText" placeholder="请输入候选人姓名">
+                            </div>
+                            <button class="btn-upload" onclick="uploadText()">
+                                <i class="fas fa-pencil-alt"></i> 提交文本分析
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 上传进度 -->
+            <section class="progress-section" id="progressSection" style="display: none;">
+                <div class="progress-card">
+                    <h3><i class="fas fa-spinner fa-spin"></i> 处理中...</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p id="progressText">正在上传...</p>
+                </div>
+            </section>
+
+            <!-- 分析结果区域 -->
+            <section class="result-section" id="resultSection" style="display: none;">
+                <div class="result-card">
+                    <h2><i class="fas fa-chart-line"></i> 分析结果</h2>
+                    
+                    <!-- 基本信息 -->
+                    <div class="result-basic" id="resultBasic">
+                        <h3>基本信息</h3>
+                        <div class="basic-info-grid">
+                            <div class="info-item">
+                                <label>简历ID:</label>
+                                <span id="resumeId">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>候选人:</label>
+                                <span id="candidateDisplay">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>上传时间:</label>
+                                <span id="uploadTime">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>处理状态:</label>
+                                <span id="processStatus">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 简历摘要 -->
+                    <div class="result-summary" id="resultSummary">
+                        <h3>简历摘要</h3>
+                        <div class="summary-content" id="summaryContent">
+                            正在生成摘要...
+                        </div>
+                    </div>
+
+                    <!-- 详细分析 -->
+                    <div class="result-analysis" id="resultAnalysis">
+                        <h3>详细分析</h3>
+                        <div class="analysis-content" id="analysisContent">
+                            正在分析...
+                        </div>
+                    </div>
+
+                    <!-- 智能问答 -->
+                    <div class="chat-section">
+                        <h3><i class="fas fa-comments"></i> 智能问答</h3>
+                        <div class="chat-container" id="chatContainer">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="system-message">
+                                    <i class="fas fa-robot"></i>
+                                    您好！我是AI助手，可以回答关于这份简历的任何问题。
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="chatInput" placeholder="请输入您的问题..." 
+                                       onkeypress="handleChatKeyPress(event)">
+                                <button class="btn-send" onclick="sendMessage()">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                            <div class="chat-suggestions">
+                                <span class="suggestion-btn" onclick="askQuestion('这个候选人的技术能力如何？')">
+                                    技术能力
+                                </span>
+                                <span class="suggestion-btn" onclick="askQuestion('候选人有多少年工作经验？')">
+                                    工作经验
+                                </span>
+                                <span class="suggestion-btn" onclick="askQuestion('候选人的教育背景怎么样？')">
+                                    教育背景
+                                </span>
+                                <span class="suggestion-btn" onclick="askQuestion('这个候选人适合什么岗位？')">
+                                    岗位匹配
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="result-actions">
+                        <button class="btn-secondary" onclick="resetForm()">
+                            <i class="fas fa-redo"></i> 重新上传
+                        </button>
+                        <button class="btn-primary" onclick="viewManagement()">
+                            <i class="fas fa-list"></i> 查看所有简历
+                        </button>
+                        <button class="btn-success" onclick="showJobRecommendations()" style="display: none;" id="jobRecommendBtn">
+                            <i class="fas fa-briefcase"></i> 岗位推荐
+                        </button>
+                    </div>
+
+                    <!-- 岗位推荐区域 -->
+                    <div id="jobRecommendations" class="job-recommendations" style="display: none;">
+                        <h3><i class="fas fa-briefcase"></i> 推荐岗位</h3>
+                        <div id="jobRecommendationsList" class="job-list"></div>
+                        <div class="job-actions">
+                            <button class="btn-secondary" onclick="hideJobRecommendations()">
+                                收起推荐
+                            </button>
+                            <button class="btn-primary" onclick="window.location.href='/jobs'">
+                                管理所有岗位
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 简历分析系统 - 基于Spring AI Alibaba构建</p>
+        </footer>
+    </div>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/resume-analysis.js}"></script>
+</body>
+</html>

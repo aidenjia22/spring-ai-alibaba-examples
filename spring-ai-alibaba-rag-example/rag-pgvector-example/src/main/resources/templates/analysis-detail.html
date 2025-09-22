@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析结果详情 - Spring AI Alibaba 简历分析系统</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 分析结果详情页面特定样式 */
+        .analysis-detail-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .analysis-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .analysis-header h1 {
+            margin: 0 0 1rem 0;
+            font-size: 2.5rem;
+        }
+
+        .analysis-header .resume-info {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .analysis-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .analysis-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .section-title i {
+            color: #667eea;
+        }
+
+        .score-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .score-item {
+            text-align: center;
+            padding: 1rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .score-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .overall-score {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .overall-score .score-value {
+            font-size: 4rem;
+            color: white;
+        }
+
+        .overall-score .recommendation {
+            font-size: 1.3rem;
+            margin-top: 1rem;
+            opacity: 0.9;
+        }
+
+        .strengths-list, .improvements-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .strengths-list li, .improvements-list li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strengths-list li {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
+        }
+
+        .improvements-list li {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            color: #856404;
+        }
+
+        .strengths-list li i {
+            color: #28a745;
+        }
+
+        .improvements-list li i {
+            color: #ffc107;
+        }
+
+        .summary-section {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-text {
+            line-height: 1.8;
+            color: #444;
+            font-size: 1.1rem;
+            white-space: pre-wrap;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 3rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-container i {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 1rem;
+        }
+
+        .loading-container {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .loading-container i {
+            font-size: 4rem;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .analysis-content {
+                grid-template-columns: 1fr;
+            }
+
+            .score-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .analysis-header h1 {
+                font-size: 2rem;
+            }
+
+            .overall-score .score-value {
+                font-size: 3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-file-alt"></i>
+            简历分析系统
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link">
+                <i class="fas fa-home"></i>
+                首页
+            </a>
+            <a href="/resume" class="nav-link">
+                <i class="fas fa-upload"></i>
+                简历分析
+            </a>
+            <a href="/management" class="nav-link">
+                <i class="fas fa-list"></i>
+                简历管理
+            </a>
+            <a href="/jobs" class="nav-link">
+                <i class="fas fa-briefcase"></i>
+                岗位管理
+            </a>
+        </div>
+    </nav>
+
+    <div class="analysis-detail-container">
+        <!-- 加载状态 -->
+        <div id="loadingContainer" class="loading-container">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h2>正在加载分析结果...</h2>
+            <p>请稍候，系统正在获取详细分析数据</p>
+        </div>
+
+        <!-- 错误状态 -->
+        <div id="errorContainer" class="error-container" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h2>加载失败</h2>
+            <p id="errorMessage">未找到分析结果或加载过程中出现错误</p>
+            <div class="action-buttons">
+                <a href="/management" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    返回简历管理
+                </a>
+            </div>
+        </div>
+
+        <!-- 分析结果内容 -->
+        <div id="analysisContainer" style="display: none;">
+            <!-- 分析结果头部 -->
+            <div class="analysis-header">
+                <h1><i class="fas fa-chart-line"></i> 简历分析详情</h1>
+                <div class="resume-info">
+                    <span id="resumeIdDisplay">-</span> | 
+                    <span id="candidateNameDisplay">-</span>
+                </div>
+            </div>
+
+            <div class="analysis-content">
+                <!-- 评分概览 -->
+                <div class="analysis-section">
+                    <div class="section-title">
+                        <i class="fas fa-star"></i>
+                        综合评分
+                    </div>
+                    <div class="overall-score">
+                        <span class="score-value" id="overallScore">-</span>
+                        <div class="recommendation" id="recommendation">-</div>
+                    </div>
+                </div>
+
+                <!-- 详细分数 -->
+                <div class="analysis-section">
+                    <div class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        详细评分
+                    </div>
+                    <div class="score-grid">
+                        <div class="score-item">
+                            <span class="score-value" id="experienceScore">-</span>
+                            <div class="score-label">工作经验</div>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-value" id="skillScore">-</span>
+                            <div class="score-label">技能水平</div>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-value" id="educationScore">-</span>
+                            <div class="score-label">教育背景</div>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-value" id="overallScoreDetail">-</span>
+                            <div class="score-label">综合评分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 优势分析 -->
+                <div class="analysis-section">
+                    <div class="section-title">
+                        <i class="fas fa-thumbs-up"></i>
+                        优势亮点
+                    </div>
+                    <ul class="strengths-list" id="strengthsList">
+                        <!-- 优势列表将动态填充 -->
+                    </ul>
+                </div>
+
+                <!-- 改进建议 -->
+                <div class="analysis-section">
+                    <div class="section-title">
+                        <i class="fas fa-lightbulb"></i>
+                        改进建议
+                    </div>
+                    <ul class="improvements-list" id="improvementsList">
+                        <!-- 改进建议列表将动态填充 -->
+                    </ul>
+                </div>
+
+                <!-- 分析摘要 -->
+                <div class="summary-section">
+                    <div class="section-title">
+                        <i class="fas fa-file-text"></i>
+                        分析摘要
+                    </div>
+                    <div class="summary-text" id="summaryText">
+                        <!-- 摘要内容将动态填充 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-buttons">
+                <a href="/management" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    返回简历管理
+                </a>
+                <button onclick="printAnalysis()" class="btn-secondary">
+                    <i class="fas fa-print"></i>
+                    打印报告
+                </button>
+                <button onclick="exportAnalysis()" class="btn-secondary">
+                    <i class="fas fa-download"></i>
+                    导出PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 引入通用脚本 -->
+    <script src="/js/common.js"></script>
+    <script>
+        // 获取URL参数中的简历ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const resumeId = urlParams.get('resumeId');
+
+        // 页面加载时获取分析结果
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!resumeId) {
+                showError('缺少简历ID参数');
+                return;
+            }
+
+            await loadAnalysisDetail();
+        });
+
+        // 加载分析结果详情
+        async function loadAnalysisDetail() {
+            try {
+                // 获取分析结果
+                const analysis = await getExistingAnalysis(resumeId);
+                
+                if (!analysis) {
+                    showError('未找到分析结果，可能还未进行分析');
+                    return;
+                }
+
+                // 显示分析结果
+                displayAnalysisResult(analysis);
+                
+            } catch (error) {
+                console.error('加载分析结果失败:', error);
+                showError('加载分析结果失败: ' + error.message);
+            }
+        }
+
+        // 显示分析结果
+        function displayAnalysisResult(analysis) {
+            // 隐藏加载状态，显示结果内容
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('analysisContainer').style.display = 'block';
+
+            // 设置基本信息
+            document.getElementById('resumeIdDisplay').textContent = analysis.resumeId || '-';
+            document.getElementById('candidateNameDisplay').textContent = '候选人简历';
+
+            // 设置评分信息
+            if (analysis.assessmentScore) {
+                const score = analysis.assessmentScore;
+                document.getElementById('overallScore').textContent = score.overallScore || '-';
+                document.getElementById('recommendation').textContent = score.recommendation || '-';
+                document.getElementById('experienceScore').textContent = score.experienceScore || '-';
+                document.getElementById('skillScore').textContent = score.skillScore || '-';
+                document.getElementById('educationScore').textContent = score.educationScore || '-';
+                document.getElementById('overallScoreDetail').textContent = score.overallScore || '-';
+            }
+
+            // 设置优势列表
+            const strengthsList = document.getElementById('strengthsList');
+            strengthsList.innerHTML = '';
+            if (analysis.strengths && analysis.strengths.length > 0) {
+                analysis.strengths.forEach(strength => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<i class="fas fa-check-circle"></i> ${strength}`;
+                    strengthsList.appendChild(li);
+                });
+            } else {
+                strengthsList.innerHTML = '<li><i class="fas fa-info-circle"></i> 暂无优势信息</li>';
+            }
+
+            // 设置改进建议列表
+            const improvementsList = document.getElementById('improvementsList');
+            improvementsList.innerHTML = '';
+            if (analysis.improvements && analysis.improvements.length > 0) {
+                analysis.improvements.forEach(improvement => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${improvement}`;
+                    improvementsList.appendChild(li);
+                });
+            } else {
+                improvementsList.innerHTML = '<li><i class="fas fa-info-circle"></i> 暂无改进建议</li>';
+            }
+
+            // 设置分析摘要
+            document.getElementById('summaryText').textContent = analysis.summary || '暂无分析摘要';
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('loadingContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // 打印分析报告
+        function printAnalysis() {
+            window.print();
+        }
+
+        // 导出PDF（这里只是示例，实际需要后端支持）
+        function exportAnalysis() {
+            alert('PDF导出功能正在开发中...');
+        }
+    </script>
+</body>
+</html>

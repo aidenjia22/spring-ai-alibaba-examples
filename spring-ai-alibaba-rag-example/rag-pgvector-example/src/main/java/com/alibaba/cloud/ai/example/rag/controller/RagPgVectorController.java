@@ -140,7 +140,7 @@ public class RagPgVectorController {
     @GetMapping(value = "/rag", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ChatResponse> generate(@RequestParam(value = "message",
             defaultValue = "how to get start with spring ai alibaba?") String message) throws IOException {
-        SearchRequest searchRequest = SearchRequest.builder().topK(2).build();
+        SearchRequest searchRequest = SearchRequest.builder().topK(2).similarityThreshold(0.5).build();
         String promptTemplate = systemResource.getContentAsString(StandardCharsets.UTF_8);
 
         return ChatClient.builder(chatModel)

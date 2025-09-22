@@ -4,13 +4,15 @@ import com.alibaba.cloud.ai.dashscope.api.DashScopeApi;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * @author yuluo
  * @author <a href="mailto:yuluo08290126@gmail.com">yuluo</a>
  */
 
-@AutoConfiguration
+//@AutoConfiguration
+@Configuration
 public class BailianAutoconfiguration {
 
 	/**
@@ -20,7 +22,7 @@ public class BailianAutoconfiguration {
 	@Bean
 	public DashScopeApi dashScopeApi() {
 		
-		return DashScopeApi.builder().apiKey(System.getenv("${AI_DASHSCOPE_API_KET}")).build();
+		return DashScopeApi.builder().apiKey("sk-f48466cf0ae84a3ead60ffc6a823e1fb").build();
 	}
 
 }

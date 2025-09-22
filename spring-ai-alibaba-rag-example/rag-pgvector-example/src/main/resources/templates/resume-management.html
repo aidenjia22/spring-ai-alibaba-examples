@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历管理 - 简历分析系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/job-matching.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <h1><i class="fas fa-file-alt"></i> 简历分析系统</h1>
+            <nav class="nav">
+                <a href="/" class="nav-link">
+                    <i class="fas fa-home"></i> 首页
+                </a>
+                <a href="/resume" class="nav-link">
+                    <i class="fas fa-search"></i> 简历分析
+                </a>
+                <a href="/management" class="nav-link active">
+                    <i class="fas fa-list"></i> 简历管理
+                </a>
+                <a href="/jobs" class="nav-link">
+                    <i class="fas fa-briefcase"></i> 岗位管理
+                </a>
+            </nav>
+        </header>
+
+        <main class="main-content">
+            <!-- 头部操作区 -->
+            <section class="management-header">
+                <div class="header-content">
+                    <h2><i class="fas fa-folder-open"></i> 简历管理</h2>
+                    <div class="header-actions">
+                        <button class="btn-primary" onclick="refreshList()">
+                            <i class="fas fa-sync-alt"></i> 刷新列表
+                        </button>
+                        <button class="btn-secondary" onclick="location.href='/resume'">
+                            <i class="fas fa-plus"></i> 上传新简历
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <i class="fas fa-file-alt"></i>
+                        <span>总简历数: <strong id="totalCount">0</strong></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span>已分析: <strong id="analyzedCount">0</strong></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-clock"></i>
+                        <span>处理中: <strong id="processingCount">0</strong></span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 搜索和筛选 -->
+            <section class="filter-section">
+                <div class="filter-card">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label for="searchInput">搜索:</label>
+                            <input type="text" id="searchInput" placeholder="按候选人姓名或文件名搜索..." 
+                                   onkeyup="filterResumes()">
+                        </div>
+                        <div class="filter-item">
+                            <label for="statusFilter">状态筛选:</label>
+                            <select id="statusFilter" onchange="filterResumes()">
+                                <option value="">全部状态</option>
+                                <option value="UPLOADED">已上传</option>
+                                <option value="PROCESSING">处理中</option>
+                                <option value="ANALYZED">已分析</option>
+                                <option value="ERROR">错误</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label for="sortBy">排序方式:</label>
+                            <select id="sortBy" onchange="sortResumes()">
+                                <option value="uploadTime">上传时间</option>
+                                <option value="candidateName">候选人姓名</option>
+                                <option value="status">处理状态</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 简历列表 -->
+            <section class="resume-list-section">
+                <div class="list-container">
+                    <!-- 加载状态 -->
+                    <div class="loading-state" id="loadingState">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>正在加载简历列表...</p>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div class="empty-state" id="emptyState" style="display: none;">
+                        <i class="fas fa-inbox"></i>
+                        <h3>暂无简历</h3>
+                        <p>还没有上传任何简历，<a href="/resume">立即上传</a>开始分析吧！</p>
+                    </div>
+
+                    <!-- 简历列表 -->
+                    <div class="resume-grid" id="resumeGrid">
+                        <!-- 动态生成的简历卡片 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 分页控件 -->
+            <section class="pagination-section" id="paginationSection" style="display: none;">
+                <div class="pagination">
+                    <button class="page-btn" id="prevBtn" onclick="changePage(-1)">
+                        <i class="fas fa-chevron-left"></i> 上一页
+                    </button>
+                    <span class="page-info" id="pageInfo">第 1 页，共 1 页</span>
+                    <button class="page-btn" id="nextBtn" onclick="changePage(1)">
+                        下一页 <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 简历分析系统 - 基于Spring AI Alibaba构建</p>
+        </footer>
+    </div>
+
+    <!-- 简历详情模态框 -->
+    <div class="modal" id="resumeModal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">简历详情</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态内容 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">关闭</button>
+                <button class="btn-primary" id="analyzeBtn" onclick="analyzeFromModal()">开始分析</button>
+                <button class="btn-danger" id="deleteBtn" onclick="deleteFromModal()">删除简历</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问答模态框 -->
+    <div class="modal" id="chatModal" style="display: none;">
+        <div class="modal-content chat-modal-content">
+            <div class="modal-header">
+                <h3>简历问答</h3>
+                <span class="close" onclick="closeChatModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container">
+                    <div class="chat-messages" id="modalChatMessages">
+                        <div class="system-message">
+                            <i class="fas fa-robot"></i>
+                            您好！我可以回答关于这份简历的任何问题。
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="modalChatInput" placeholder="请输入您的问题..." 
+                               onkeypress="handleModalChatKeyPress(event)">
+                        <button class="btn-send" onclick="sendModalMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/resume-management.js}"></script>
+</body>
+</html>

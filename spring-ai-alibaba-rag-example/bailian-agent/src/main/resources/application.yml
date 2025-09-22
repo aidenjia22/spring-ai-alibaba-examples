@@ -5,6 +5,6 @@ spring:
   ai:
     dashscope:
       agent:
-        app-id: "put-your-bailian-app-id-here"
-      api-key: ${AI_DASHSCOPE_API_KEY}
+        app-id: "6302e42b304d44a383655196dccdfa2e"
+      api-key: sk-f48466cf0ae84a3ead60ffc6a823e1fb
       #workspace-id: ${AI_DASHSCOPE_WORKSPACE_ID} #选填，如果不填写，则默认使用应用的默认工作区

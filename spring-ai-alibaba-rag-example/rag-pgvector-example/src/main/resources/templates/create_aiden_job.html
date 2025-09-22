@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>为Aiden创建匹配岗位</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #007acc; text-align: center; margin-bottom: 30px; }
+        .loading { text-align: center; padding: 20px; color: #666; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .job-info { background: #e7f3ff; padding: 15px; border-radius: 5px; margin-top: 15px; }
+        .match-analysis { background: #fff3cd; padding: 15px; border-radius: 5px; margin-top: 15px; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        button { background: #007acc; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 10px; }
+        button:hover { background: #005a99; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>为Aiden创建高匹配度测试工程师岗位</h1>
+        <div id="status" class="loading">正在创建岗位...</div>
+        <div id="results"></div>
+        <button onclick="createJobForAiden()" id="retryBtn" style="display: none;">重试创建</button>
+        <button onclick="window.location.href='/jobs'" id="viewJobsBtn" style="display: none;">查看岗位管理</button>
+    </div>
+
+<script>
+// 为Aiden创建匹配的测试工程师岗位
+async function createJobForAiden() {
+    const statusDiv = document.getElementById('status');
+    const resultsDiv = document.getElementById('results');
+    const retryBtn = document.getElementById('retryBtn');
+    const viewJobsBtn = document.getElementById('viewJobsBtn');
+    
+    statusDiv.innerHTML = '正在创建岗位...';
+    statusDiv.className = 'loading';
+    retryBtn.style.display = 'none';
+    viewJobsBtn.style.display = 'none';
+    resultsDiv.innerHTML = '';
+
+    const jobData = {
+        title: "高级测试工程师",
+        company: "字节跳动",
+        department: "质量保障部",
+        location: "北京",
+        employmentType: "FULL_TIME",
+        experience: "3-5年",
+        education: "本科及以上",
+        salaryRange: "20K-35K·14薪",
+        description: "负责核心产品的测试工作，包括功能测试、自动化测试、性能测试等，确保产品质量和用户体验。专注于移动应用和Web应用的质量保障，运用先进的测试技术和工具提升产品稳定性。",
+        responsibilities: [
+            "负责Web应用和移动应用的功能测试、接口测试、自动化测试",
+            "设计和维护自动化测试框架，主导HttpRunner等接口自动化平台建设",
+            "制定测试计划和测试方案，执行测试用例，确保覆盖率达到99%以上",
+            "跟踪和分析缺陷，推动问题解决和质量改进，建立完善的缺陷管理流程",
+            "参与产品需求评审，从测试角度提供专业建议和风险评估",
+            "指导初级测试工程师，分享测试最佳实践和技术经验"
+        ],
+        requirements: [
+            "计算机科学与技术相关专业本科及以上学历",
+            "3-5年软件测试经验，有互联网产品测试经验优先",
+            "熟练掌握Python编程，有自动化测试开发和脚本编写经验",
+            "精通接口测试工具和方法，如HttpRunner、Postman、YApi等",
+            "掌握Selenium WebDriver、Pytest等主流测试框架和工具",
+            "熟悉MySQL数据库操作，具备数据验证和SQL查询能力",
+            "具备Git版本控制系统使用经验，熟悉团队协作开发流程"
+        ],
+        skills: [
+            "Python",
+            "Selenium",
+            "Pytest",
+            "HttpRunner",
+            "YApi",
+            "MySQL",
+            "Git",
+            "接口测试",
+            "自动化测试",
+            "功能测试",
+            "缺陷管理",
+            "测试方案设计"
+        ],
+        benefits: [
+            "五险一金",
+            "年终奖金",
+            "股票期权",
+            "免费三餐",
+            "健身房",
+            "带薪年假",
+            "培训机会",
+            "团建活动",
+            "技术分享补贴"
+        ],
+        status: "ACTIVE",
+        createdBy: "system"
+    };
+
+    try {
+        const response = await fetch('/ai/resume/jobs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(jobData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const result = await response.json();
+        console.log('岗位创建成功:', result);
+        
+        statusDiv.innerHTML = '✅ 岗位创建成功！';
+        statusDiv.className = 'result success';
+        
+        resultsDiv.innerHTML = `
+            <div class="job-info">
+                <h3>📋 创建的岗位信息</h3>
+                <p><strong>岗位ID:</strong> ${result.jobId}</p>
+                <p><strong>岗位标题:</strong> ${result.title}</p>
+                <p><strong>公司:</strong> ${result.company}</p>
+                <p><strong>部门:</strong> ${result.department}</p>
+                <p><strong>地点:</strong> ${result.location}</p>
+                <p><strong>薪资:</strong> ${result.salaryRange}</p>
+                <p><strong>工作类型:</strong> ${result.employmentType}</p>
+                <p><strong>经验要求:</strong> ${result.experience}</p>
+                <p><strong>学历要求:</strong> ${result.education}</p>
+            </div>
+            
+            <div class="match-analysis">
+                <h3>🎯 与Aiden简历的匹配度分析</h3>
+                <p><strong>预期匹配度:</strong> <span style="color: #28a745; font-size: 1.2em; font-weight: bold;">95%+</span></p>
+                <h4>高度匹配的要求:</h4>
+                <ul>
+                    <li>✅ <strong>经验要求:</strong> 3-5年软件测试经验 (Aiden有5年经验)</li>
+                    <li>✅ <strong>Python技能:</strong> 熟练掌握Python编程 (Aiden专长)</li>
+                    <li>✅ <strong>自动化测试:</strong> HttpRunner、Selenium、Pytest (完全匹配)</li>
+                    <li>✅ <strong>接口测试:</strong> YApi、Postman等工具 (Aiden擅长)</li>
+                    <li>✅ <strong>数据库:</strong> MySQL操作和SQL查询 (技能匹配)</li>
+                    <li>✅ <strong>版本控制:</strong> Git使用经验 (技能匹配)</li>
+                    <li>✅ <strong>教育背景:</strong> 计算机相关专业本科 (学历匹配)</li>
+                </ul>
+                
+                <h4>职责匹配亮点:</h4>
+                <ul>
+                    <li>🚀 主导HttpRunner接口自动化平台建设 (Aiden项目经验)</li>
+                    <li>🎯 测试覆盖率99%以上 (Aiden实际达成)</li>
+                    <li>⚡ 自动化测试框架设计维护 (Aiden专业技能)</li>
+                    <li>📊 缺陷管理和质量改进 (Aiden工作重点)</li>
+                </ul>
+            </div>
+        `;
+        
+        viewJobsBtn.style.display = 'inline-block';
+        
+        return result;
+    } catch (error) {
+        console.error('创建岗位失败:', error);
+        statusDiv.innerHTML = '❌ 岗位创建失败';
+        statusDiv.className = 'result error';
+        
+        resultsDiv.innerHTML = `
+            <div class="result error">
+                <h3>错误信息</h3>
+                <p><strong>错误详情:</strong> ${error.message}</p>
+                <p>可能的原因：</p>
+                <ul>
+                    <li>服务器连接问题</li>
+                    <li>数据格式错误</li>
+                    <li>权限不足</li>
+                    <li>数据库连接异常</li>
+                </ul>
+            </div>
+        `;
+        
+        retryBtn.style.display = 'inline-block';
+        throw error;
+    }
+}
+
+// 页面加载完成后执行
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createJobForAiden);
+} else {
+    createJobForAiden();
+}
+</script>
+</body>
+</html>

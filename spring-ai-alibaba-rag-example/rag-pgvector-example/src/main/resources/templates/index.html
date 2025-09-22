@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简历分析系统</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部导航 -->
+        <header class="header">
+            <h1><i class="fas fa-file-alt"></i> 简历分析系统</h1>
+            <nav class="nav">
+                <a href="/" class="nav-link active">
+                    <i class="fas fa-home"></i> 首页
+                </a>
+                <a href="/resume" class="nav-link">
+                    <i class="fas fa-search"></i> 简历分析
+                </a>
+                <a href="/management" class="nav-link">
+                    <i class="fas fa-list"></i> 简历管理
+                </a>
+            </nav>
+        </header>
+
+        <!-- 主内容区域 -->
+        <main class="main-content">
+            <!-- 系统介绍 -->
+            <section class="intro-section">
+                <div class="intro-card">
+                    <h2><i class="fas fa-robot"></i> 智能简历分析系统</h2>
+                    <p>基于AI大模型和向量检索技术，提供专业的简历分析和智能问答服务</p>
+                    
+                    <div class="features">
+                        <div class="feature-item">
+                            <i class="fas fa-upload"></i>
+                            <h3>多格式支持</h3>
+                            <p>支持PDF、Word、TXT等多种格式的简历文件上传</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-brain"></i>
+                            <h3>智能分析</h3>
+                            <p>基于大模型的专业简历分析，提供详细的评估报告</p>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-comments"></i>
+                            <h3>智能问答</h3>
+                            <p>针对简历内容进行实时问答，获取精准信息</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 快速操作 -->
+            <section class="quick-actions">
+                <h2><i class="fas fa-bolt"></i> 快速开始</h2>
+                <div class="action-grid">
+                    <div class="action-card" onclick="location.href='/resume'">
+                        <i class="fas fa-file-upload"></i>
+                        <h3>上传简历</h3>
+                        <p>上传简历文件或输入简历文本</p>
+                        <button class="btn-primary">立即上传</button>
+                    </div>
+                    <div class="action-card" onclick="location.href='/management'">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>查看分析</h3>
+                        <p>查看已上传简历的分析结果</p>
+                        <button class="btn-secondary">查看列表</button>
+                    </div>
+                    <div class="action-card demo-card">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>演示功能</h3>
+                        <p>使用示例简历体验分析功能</p>
+                        <button class="btn-demo" onclick="loadDemoResume()">体验演示</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 系统状态 -->
+            <section class="system-status">
+                <h2><i class="fas fa-heartbeat"></i> 系统状态</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <i class="fas fa-server status-icon"></i>
+                        <span class="status-label">后端服务</span>
+                        <span class="status-value" id="backend-status">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-database status-icon"></i>
+                        <span class="status-label">向量数据库</span>
+                        <span class="status-value" id="database-status">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-robot status-icon"></i>
+                        <span class="status-label">AI模型</span>
+                        <span class="status-value" id="ai-status">检查中...</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-file-alt status-icon"></i>
+                        <span class="status-label">简历总数</span>
+                        <span class="status-value" id="resume-count">0</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 使用说明 -->
+            <section class="usage-guide">
+                <h2><i class="fas fa-question-circle"></i> 使用说明</h2>
+                <div class="guide-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>上传简历</h3>
+                            <p>选择简历文件或直接输入简历文本内容</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>AI分析</h3>
+                            <p>系统自动对简历进行智能分析和评估</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>查看结果</h3>
+                            <p>获取详细的分析报告和智能问答服务</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>&copy; 2024 简历分析系统 - 基于Spring AI Alibaba构建</p>
+        </footer>
+    </div>
+
+    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/index.js}"></script>
+</body>
+</html>

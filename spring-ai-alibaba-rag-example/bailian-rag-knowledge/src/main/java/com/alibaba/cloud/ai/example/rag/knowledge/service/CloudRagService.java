@@ -54,7 +54,7 @@ public class CloudRagService implements RagService {
 
 	private static final String indexName = "微服务";
 
-	@Value("classpath:/data/spring_ai_alibaba_quickstart.pdf")
+	@Value("classpath:/data/spring_ai_alibaba_quickstart.md")
 	private Resource springAiResource;
 
 	private static final String retrievalSystemTemplate = """
@@ -98,7 +98,7 @@ public class CloudRagService implements RagService {
 
 	private String saveToTempFile(Resource springAiResource) {
 		try {
-			File tempFile = File.createTempFile("spring_ai_alibaba_quickstart", ".pdf");
+			File tempFile = File.createTempFile("spring_ai_alibaba_quickstart", ".md");
 			tempFile.deleteOnExit();
 
 			try (InputStream inputStream = springAiResource.getInputStream();
