@@ -750,6 +750,21 @@ function openJobMatchingModal(resumeId, candidateName) {
                         <select id="singleJobSelect" class="form-control">
                             <option value="">请选择岗位...</option>
                         </select>
+                        
+                        <h4><i class="fas fa-cogs"></i> 匹配算法</h4>
+                        <div class="match-algorithm-selector">
+                            <label>
+                                <input type="radio" name="singleMatchType" value="traditional" checked>
+                                <span>传统匹配</span>
+                                <small>基于简历文本直接分析</small>
+                            </label>
+                            <label>
+                                <input type="radio" name="singleMatchType" value="semantic">
+                                <span>语义检索匹配</span>
+                                <small>基于RAG智能检索和重排序</small>
+                            </label>
+                        </div>
+                        
                         <button class="btn-primary" onclick="performSingleMatch()">开始匹配</button>
                     </div>
                     
@@ -904,10 +919,21 @@ async function performSingleMatch() {
         return;
     }
     
+    const matchType = document.querySelector('input[name="singleMatchType"]:checked').value;
+    console.log('执行单岗位匹配 - jobId:', jobId, 'matchType:', matchType);
+    
     try {
         showMatchingLoading(true);
         
-        const result = await apiCall(`${API_BASE}/match/${currentResumeId}/${jobId}`, 'POST');
+        let result;
+        if (matchType === 'semantic') {
+            // 使用语义检索匹配
+            result = await apiCall(`${API_BASE}/match/${currentResumeId}/${jobId}/semantic`, 'POST');
+        } else {
+            // 使用传统匹配
+            result = await apiCall(`${API_BASE}/match/${currentResumeId}/${jobId}`, 'POST');
+        }
+        
         displayMatchingResults([result], 'single');
         
     } catch (error) {

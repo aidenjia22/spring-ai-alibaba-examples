@@ -16,6 +16,9 @@
 
 package com.alibaba.cloud.ai.example.rag.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * 工作类型枚举
  * 
@@ -47,6 +50,15 @@ public enum EmploymentType {
 
     EmploymentType(String description) {
         this.description = description;
+    }
+
+    @JsonCreator
+    public static EmploymentType fromString(String value) {
+        try {
+            return EmploymentType.valueOf(value.toUpperCase());
+        } catch (Exception e) {
+            return FULL_TIME; // 默认值
+        }
     }
 
     public String getDescription() {

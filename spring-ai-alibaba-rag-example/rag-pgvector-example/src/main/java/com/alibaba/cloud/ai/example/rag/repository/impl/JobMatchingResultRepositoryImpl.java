@@ -322,14 +322,10 @@ public class JobMatchingResultRepositoryImpl implements JobMatchingResultReposit
             String detailMatchesJson = rs.getString("detail_matches");
             if (detailMatchesJson != null && !detailMatchesJson.trim().isEmpty()) {
                 try {
-                    @SuppressWarnings("unchecked")
-                    Map<String, JobMatchingResult.MatchDetail> detailMatches = objectMapper.readValue(
-                        detailMatchesJson, 
-                        objectMapper.getTypeFactory().constructMapType(Map.class, String.class, JobMatchingResult.MatchDetail.class)
-                    );
-                    result.setDetailMatches(detailMatches);
+                    JobMatchingResult.MatchDetail detailMatch = objectMapper.readValue(detailMatchesJson, JobMatchingResult.MatchDetail.class);
+                    result.setDetailMatches(detailMatch);
                 } catch (Exception e) {
-                    logger.warn("解析详细匹配信息失败 - resumeId: {}, jobId: {}, JSON: {}, 错误: {}", 
+                    logger.warn("解析详细匹配信息失败 - resumeId: {}, jobId: {}, JSON: {}, 错误: {}",
                                result.getResumeId(), result.getJobId(), detailMatchesJson, e.getMessage());
                 }
             }

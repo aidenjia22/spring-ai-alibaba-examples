@@ -16,6 +16,14 @@
 
 package com.alibaba.cloud.ai.example.rag.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -26,85 +34,82 @@ import java.util.Map;
  * @author WANG, ZHEN
  * @since 1.0.0-M3
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JobMatchingResult {
     private String resumeId;
     private String jobId;
+    @JsonProperty("matchScore")
+    @JsonPropertyDescription("匹配分数，范围60-100分，数值越高表示匹配度越好")
     private double matchScore; // 匹配分数 0-100
+    @JsonProperty("matchLevel")
+    @JsonPropertyDescription("匹配等级，可选值：优秀/良好/一般/较差")
     private String matchLevel; // 匹配等级：EXCELLENT, GOOD, FAIR, POOR
+    @JsonProperty("summary")
+    @JsonPropertyDescription("详细的匹配分析总结，包括技能匹配、经验匹配、教育背景等方面的分析")
     private String summary; // 匹配总结
-    private Map<String, MatchDetail> detailMatches; // 详细匹配分析
+    @JsonProperty("detailMatches")
+    @JsonPropertyDescription("各维度的详细匹配分析，包括技能、经验、教育等方面")
+    private MatchDetail detailMatches; // 详细匹配分析，支持灵活的数据结构
+    @JsonProperty("advantages")
+    @JsonPropertyDescription("候选人的主要优势和竞争力，字符串数组")
     private List<String> advantages; // 候选人优势
+    @JsonProperty("gaps")
+    @JsonPropertyDescription("候选人的能力差距和不足之处，字符串数组")
     private List<String> gaps; // 能力差距
-    private List<String> recommendations; // 建议
+    @JsonProperty("recommendations")
+    @JsonPropertyDescription("针对候选人的发展建议和改进方向，字符串数组")
+    private List<String> recommendations;
+    @JsonIgnore
     private LocalDateTime analysisTime;
-
-    public JobMatchingResult() {
-        this.analysisTime = LocalDateTime.now();
-    }
-
-    public JobMatchingResult(String resumeId, String jobId) {
-        this();
-        this.resumeId = resumeId;
-        this.jobId = jobId;
-    }
 
     /**
      * 匹配详情
      */
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class MatchDetail {
-        private double score; // 该项匹配分数
-        private String level; // 匹配等级
-        private String analysis; // 分析说明
-        private List<String> matchedItems; // 匹配项
-        private List<String> missingItems; // 缺失项
+        @JsonProperty("skills")
+        @JsonPropertyDescription("匹配的技能")
+        private String skills;
+        @JsonProperty("experience")
+        @JsonPropertyDescription("该项匹配经验")
+        private String experience;
+        @JsonProperty("education")
+        @JsonPropertyDescription("学历")
+        private String education;
+        @JsonProperty("workHistory")
+        @JsonPropertyDescription("工作经历")
+        private String workHistory;
 
-        public MatchDetail() {}
-
-        public MatchDetail(double score, String level, String analysis) {
-            this.score = score;
-            this.level = level;
-            this.analysis = analysis;
+        public String getSkills() {
+            return skills;
         }
 
-        // Getters and Setters
-        public double getScore() {
-            return score;
+        public void setSkills(String skills) {
+            this.skills = skills;
         }
 
-        public void setScore(double score) {
-            this.score = score;
+        public String getExperience() {
+            return experience;
         }
 
-        public String getLevel() {
-            return level;
+        public void setExperience(String experience) {
+            this.experience = experience;
         }
 
-        public void setLevel(String level) {
-            this.level = level;
+        public String getEducation() {
+            return education;
         }
 
-        public String getAnalysis() {
-            return analysis;
+        public void setEducation(String education) {
+            this.education = education;
         }
 
-        public void setAnalysis(String analysis) {
-            this.analysis = analysis;
+        public String getWorkHistory() {
+            return workHistory;
         }
 
-        public List<String> getMatchedItems() {
-            return matchedItems;
-        }
-
-        public void setMatchedItems(List<String> matchedItems) {
-            this.matchedItems = matchedItems;
-        }
-
-        public List<String> getMissingItems() {
-            return missingItems;
-        }
-
-        public void setMissingItems(List<String> missingItems) {
-            this.missingItems = missingItems;
+        public void setWorkHistory(String workHistory) {
+            this.workHistory = workHistory;
         }
     }
 
@@ -119,6 +124,14 @@ public class JobMatchingResult {
 
     public String getJobId() {
         return jobId;
+    }
+
+    public MatchDetail getDetailMatches() {
+        return detailMatches;
+    }
+
+    public void setDetailMatches(MatchDetail detailMatches) {
+        this.detailMatches = detailMatches;
     }
 
     public void setJobId(String jobId) {
@@ -159,13 +172,6 @@ public class JobMatchingResult {
         this.summary = summary;
     }
 
-    public Map<String, MatchDetail> getDetailMatches() {
-        return detailMatches;
-    }
-
-    public void setDetailMatches(Map<String, MatchDetail> detailMatches) {
-        this.detailMatches = detailMatches;
-    }
 
     public List<String> getAdvantages() {
         return advantages;
@@ -197,5 +203,20 @@ public class JobMatchingResult {
 
     public void setAnalysisTime(LocalDateTime analysisTime) {
         this.analysisTime = analysisTime;
+    }
+    
+    @Override
+    public String toString() {
+        return "JobMatchingResult{" +
+                "resumeId='" + resumeId + '\'' +
+                ", jobId='" + jobId + '\'' +
+                ", matchScore=" + matchScore +
+                ", matchLevel='" + matchLevel + '\'' +
+                ", summary='" + (summary != null ? summary.substring(0, Math.min(50, summary.length())) + "..." : "null") + '\'' +
+                ", advantagesCount=" + (advantages != null ? advantages.size() : 0) +
+                ", gapsCount=" + (gaps != null ? gaps.size() : 0) +
+                ", recommendationsCount=" + (recommendations != null ? recommendations.size() : 0) +
+                ", analysisTime=" + analysisTime +
+                '}';
     }
 }

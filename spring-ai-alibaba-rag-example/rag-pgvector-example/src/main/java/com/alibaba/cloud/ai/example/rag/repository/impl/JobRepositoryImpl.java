@@ -73,7 +73,7 @@ public class JobRepositoryImpl implements JobRepository {
                 job.getCompany(),
                 job.getDepartment(),
                 job.getLocation(),
-                job.getEmploymentType(),
+                job.getEmploymentType() != null ? job.getEmploymentType().name() : EmploymentType.FULL_TIME.name(),
                 job.getExperience(),
                 job.getEducation(),
                 job.getSalaryRange(),
@@ -86,7 +86,7 @@ public class JobRepositoryImpl implements JobRepository {
                     jdbcTemplate.getDataSource().getConnection().createArrayOf("text", job.getSkills().toArray()) : null,
                 job.getBenefits() != null ? 
                     jdbcTemplate.getDataSource().getConnection().createArrayOf("text", job.getBenefits().toArray()) : null,
-                job.getStatus() != null ? job.getStatus() : "ACTIVE",
+                job.getStatus() != null ? job.getStatus().name() : JobStatus.ACTIVE.name(),
                 Timestamp.valueOf(job.getCreateTime() != null ? job.getCreateTime() : LocalDateTime.now()),
                 Timestamp.valueOf(job.getUpdateTime() != null ? job.getUpdateTime() : LocalDateTime.now()),
                 job.getCreatedBy()
@@ -114,7 +114,7 @@ public class JobRepositoryImpl implements JobRepository {
                 job.getCompany(),
                 job.getDepartment(),
                 job.getLocation(),
-                job.getEmploymentType(),
+                job.getEmploymentType() != null ? job.getEmploymentType().name() : EmploymentType.FULL_TIME.name(),
                 job.getExperience(),
                 job.getEducation(),
                 job.getSalaryRange(),
@@ -127,7 +127,7 @@ public class JobRepositoryImpl implements JobRepository {
                     jdbcTemplate.getDataSource().getConnection().createArrayOf("text", job.getSkills().toArray()) : null,
                 job.getBenefits() != null ? 
                     jdbcTemplate.getDataSource().getConnection().createArrayOf("text", job.getBenefits().toArray()) : null,
-                job.getStatus(),
+                job.getStatus() != null ? job.getStatus().name() : JobStatus.ACTIVE.name(),
                 Timestamp.valueOf(LocalDateTime.now()),
                 job.getCreatedBy(),
                 job.getJobId()

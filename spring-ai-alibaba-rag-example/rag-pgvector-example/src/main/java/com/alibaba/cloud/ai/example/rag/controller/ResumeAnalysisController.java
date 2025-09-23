@@ -485,9 +485,15 @@ public class ResumeAnalysisController {
     @PostMapping("/jobs")
     public ResponseEntity<Job> addJob(@RequestBody Job job) {
         try {
+            logger.info("开始添加新岗位 - 标题: {}, 公司: {}", job.getTitle(), job.getCompany());
             Job savedJob = jobMatchingService.addJob(job);
+            logger.info("岗位添加成功 - jobId: {}", savedJob.getJobId());
             return ResponseEntity.ok(savedJob);
         } catch (Exception e) {
+            logger.error("添加岗位失败 - 标题: {}, 公司: {}, 错误: {}", 
+                        job != null ? job.getTitle() : "null", 
+                        job != null ? job.getCompany() : "null", 
+                        e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -548,6 +554,32 @@ public class ResumeAnalysisController {
             logger.error("带过滤条件的岗位推荐失败 - resumeId: {}, 错误: {}", resumeId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ArrayList<>());
+        }
+    }
+    
+    /**
+     * 使用语义检索的简历岗位匹配（改进版）
+     */
+    @PostMapping("/match/{resumeId}/{jobId}/semantic")
+    public ResponseEntity<JobMatchingResult> matchResumeWithJobSemantic(
+            @PathVariable String resumeId,
+            @PathVariable String jobId) {
+        try {
+            // 检查简历和岗位是否存在
+            if (!resumeRepository.existsById(resumeId)) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            if (jobMatchingService.getJobById(jobId) == null) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            JobMatchingResult result = jobMatchingService.matchResumeWithJobUsingSemanticSearch(resumeId, jobId);
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            logger.error("语义检索匹配失败 - resumeId: {}, jobId: {}, 错误: {}", resumeId, jobId, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     

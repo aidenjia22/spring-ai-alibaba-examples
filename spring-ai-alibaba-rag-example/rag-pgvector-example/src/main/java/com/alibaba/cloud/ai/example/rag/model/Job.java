@@ -16,6 +16,9 @@
 
 package com.alibaba.cloud.ai.example.rag.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -32,6 +35,7 @@ public class Job {
     private String company;
     private String department;
     private String location;
+    @JsonProperty("employmentType")
     private EmploymentType employmentType;
     private String experience;
     private String education;
@@ -41,7 +45,9 @@ public class Job {
     private List<String> requirements;
     private List<String> skills;
     private List<String> benefits;
+    @JsonProperty("status")
     private JobStatus status;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private String createdBy;

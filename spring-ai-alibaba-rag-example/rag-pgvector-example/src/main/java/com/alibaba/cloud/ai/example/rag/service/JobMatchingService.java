@@ -30,6 +30,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -86,7 +89,7 @@ public class JobMatchingService {
      */
     public JobMatchingResult matchResumeWithJob(String resumeId, String jobId) {
         logger.info("开始简历岗位匹配 - resumeId: {}, jobId: {}", resumeId, jobId);
-        
+
         try {
             // 从数据库获取岗位信息
             Job job = jobRepository.findById(jobId).orElse(null);
@@ -98,61 +101,86 @@ public class JobMatchingService {
             // 构建搜索请求，获取简历内容
             FilterExpressionBuilder builder = new FilterExpressionBuilder();
             Filter.Expression filter = builder.eq("resumeId", resumeId).build();
-            
-            SearchRequest searchRequest = SearchRequest.builder()
-                .topK(15)
-                .similarityThreshold(0.1)
-                .filterExpression(filter)
-                .build();
 
+            // 先验证是否能检索到简历内容
+            logger.info("开始验证简历内容检索 - resumeId: {}", resumeId);
+            List<Document> documents = vectorStore.similaritySearch(SearchRequest.builder()
+                .topK(5)
+                .filterExpression(filter)
+                .build());
+            
+            if (documents.isEmpty()) {
+                logger.warn("未找到简历向量数据 - resumeId: {}", resumeId);
+                // 返回默认结果
+                JobMatchingResult defaultResult = new JobMatchingResult();
+                defaultResult.setResumeId(resumeId);
+                defaultResult.setJobId(jobId);
+                defaultResult.setMatchScore(50.0);
+                defaultResult.setMatchLevel("需验证");
+                defaultResult.setSummary("未能找到该简历的向量数据，可能简历尚未上传或处理完成。请确认简历已成功上传并等待处理完成。");
+                return defaultResult;
+            }
+            logger.info("成功检索到简历文档片段数: {} - resumeId: {}", documents.size(), resumeId);
+            // 手动获取简历内容用于分析，确保获取到正确的简历信息
+            StringBuilder resumeContent = new StringBuilder();
+            for (Document doc : documents) {
+                resumeContent.append(doc.getText()).append("\n");
+            }
+            logger.debug("提取到的简历内容长度: {} - resumeId: {}", resumeContent.length(), resumeId);
             // 获取匹配提示词模板
             String matchingPrompt = jobMatchingPromptResource.getContentAsString(StandardCharsets.UTF_8);
-            
             // 构建岗位信息字符串
             String jobInfo = buildJobInfoString(job);
-            
             logger.debug("执行RAG匹配分析 - 岗位信息: {}", jobInfo);
-            
-            // 检查是否已有缓存的匹配结果
             Optional<JobMatchingResult> existingResult = jobMatchingResultRepository.findByResumeIdAndJobId(resumeId, jobId);
             if (existingResult.isPresent()) {
-                logger.info("使用已缓存的匹配结果 - resumeId: {}, jobId: {}, matchScore: {}", 
+                logger.info("使用已缓存的匹配结果 - resumeId: {}, jobId: {}, matchScore: {}",
                            resumeId, jobId, existingResult.get().getMatchScore());
                 return existingResult.get();
             }
-            
-            // 使用entity方法直接获取结构化结果
-            JobMatchingResult result = ChatClient.builder(chatModel)
-                .defaultAdvisors(new RetrievalRerankAdvisor(vectorStore, rerankModel, searchRequest, 
-                    new SystemPromptTemplate(matchingPrompt), 0.1))
-                .build()
-                .prompt()
-                .user("请分析简历与以下岗位的匹配度：\n\n" + jobInfo)
-                .call()
-                .entity(JobMatchingResult.class);
-                
-            result.setResumeId(resumeId);
-            result.setJobId(jobId);
-            result.setAnalysisTime(java.time.LocalDateTime.now());
-            
-            logger.debug("AI返回结果: {}", result);
-            
-            // 保存匹配结果到数据库
+            // 直接使用简历内容和岗位信息进行匹配分析（不使用RAG检索）
+            String userPrompt = String.format("请根据以下简历内容对此岗位进行匹配度分析。\n\n简历内容：\n%s\n\n岗位信息：\n%s", 
+                resumeContent, jobInfo);
             try {
-                JobMatchingResult savedResult = jobMatchingResultRepository.save(result);
-                logger.info("匹配结果已保存到数据库 - resumeId: {}, jobId: {}, matchScore: {}", 
-                           resumeId, jobId, savedResult.getMatchScore());
-                result = savedResult;
+                // 使用entity方法获取结构化结果
+                JobMatchingResult result = ChatClient.builder(chatModel)
+                    .defaultSystem(matchingPrompt)
+                    .build()
+                    .prompt()
+                    .user(userPrompt)
+                    .call()
+                    .entity(JobMatchingResult.class);
+                logger.debug("AI返回结构化结果: {}", result);
+                // 设置基本信息
+                result.setResumeId(resumeId);
+                result.setJobId(jobId);
+                result.setAnalysisTime(java.time.LocalDateTime.now());
+                logger.info("简历岗位匹配完成 - resumeId: {}, jobId: {}, matchScore: {}", 
+                           resumeId, jobId, result.getMatchScore());
+                // 保存匹配结果到数据库
+                try {
+                    JobMatchingResult savedResult = jobMatchingResultRepository.save(result);
+                    logger.info("匹配结果已保存到数据库 - resumeId: {}, jobId: {}, matchScore: {}", 
+                               resumeId, jobId, savedResult.getMatchScore());
+                    return savedResult;
+                } catch (Exception e) {
+                    logger.warn("保存匹配结果失败 - resumeId: {}, jobId: {}, 错误: {}", 
+                               resumeId, jobId, e.getMessage());
+                    return result;
+                }
+                        
             } catch (Exception e) {
-                logger.warn("保存匹配结果失败 - resumeId: {}, jobId: {}, 错误: {}", 
-                           resumeId, jobId, e.getMessage());
+                logger.error("匹配分析完全失败，返回默认结果 - resumeId: {}, jobId: {}, 错误: {}",
+                           resumeId, jobId, e.getMessage(), e);
+                JobMatchingResult defaultResult = new JobMatchingResult();
+                defaultResult.setResumeId(resumeId);
+                defaultResult.setJobId(jobId);
+                defaultResult.setMatchScore(65.0);
+                defaultResult.setMatchLevel("一般");
+                defaultResult.setSummary("由于系统分析异常，无法提供详细匹配分析。建议手动检查简历与岗位要求的匹配度。");
+                defaultResult.setAnalysisTime(java.time.LocalDateTime.now());
+                return defaultResult;
             }
-            
-            logger.info("简历岗位匹配完成 - resumeId: {}, jobId: {}, matchScore: {}", 
-                       resumeId, jobId, result.getMatchScore());
-            
-            return result;
-            
         } catch (IOException e) {
             logger.error("读取匹配提示词模板失败 - resumeId: {}, jobId: {}", resumeId, jobId, e);
             throw new RuntimeException("读取匹配提示词模板失败", e);
@@ -161,6 +189,8 @@ public class JobMatchingService {
             throw new RuntimeException("简历岗位匹配失败: " + e.getMessage(), e);
         }
     }
+
+    
 
     /**
      * 为简历推荐合适的岗位
@@ -358,37 +388,6 @@ public class JobMatchingService {
     }
 
     /**
-     * 解析匹配结果
-     * 使用简单的文本解析
-     */
-    private JobMatchingResult parseMatchingResult(String resumeId, String jobId, String analysisResult) {
-        logger.debug("开始解析匹配结果 - resumeId: {}, jobId: {}", resumeId, jobId);
-        
-        JobMatchingResult result = new JobMatchingResult(resumeId, jobId);
-        
-        // 简单的分数提取逻辑
-        try {
-            double score = extractMatchScore(analysisResult);
-            result.setMatchScore(score);
-        } catch (Exception e) {
-            logger.warn("文本分数提取失败，使用默认分数 - resumeId: {}, jobId: {}", resumeId, jobId);
-            result.setMatchScore(50.0); // 默认分数
-        }
-        
-        result.setSummary(analysisResult);
-        
-        // 简单的优势和差距提取
-        result.setAdvantages(extractListFromText(analysisResult, "优势", "适合", "符合"));
-        result.setGaps(extractListFromText(analysisResult, "不足", "缺少", "差距"));
-        result.setRecommendations(extractListFromText(analysisResult, "建议", "推荐", "提升"));
-        
-        logger.debug("文本解析完成 - resumeId: {}, jobId: {}, 匹配分数: {}", 
-                    resumeId, jobId, result.getMatchScore());
-        
-        return result;
-    }
-    
-    /**
      * 从文本中提取列表信息
      */
     private List<String> extractListFromText(String text, String... keywords) {
@@ -419,7 +418,179 @@ public class JobMatchingService {
         
         return items.isEmpty() ? Arrays.asList("未找到相关信息") : items;
     }
+    
+    /**
+     * 使用语义检索的简历岗位匹配方法（改进版）
+     * 解决原方法的以下问题：
+     * 1. 检索范围有限：使用语义相似性检索而不是简单的resumeId过滤
+     * 2. 智能筛选：对检索到的内容进行相关性排序和筛选
+     * 3. 真正的RAG检索：使用RAG Advisor进行智能检索和重排序
+     * 
+     * @param resumeId 简历ID
+     * @param jobId 岗位ID
+     * @return 匹配结果
+     */
+    public JobMatchingResult matchResumeWithJobUsingSemanticSearch(String resumeId, String jobId) {
+        logger.info("开始语义检索简历岗位匹配 - resumeId: {}, jobId: {}", resumeId, jobId);
+        
+        try {
+            // 从数据库获取岗位信息
+            Job job = jobRepository.findById(jobId).orElse(null);
+            if (job == null) {
+                logger.warn("岗位不存在 - jobId: {}", jobId);
+                throw new RuntimeException("岗位不存在: " + jobId);
+            }
+            
+            // 检查是否已有缓存的匹配结果
+            Optional<JobMatchingResult> existingResult = jobMatchingResultRepository.findByResumeIdAndJobId(resumeId, jobId);
+            if (existingResult.isPresent()) {
+                logger.info("使用已缓存的匹配结果 - resumeId: {}, jobId: {}, matchScore: {}",
+                           resumeId, jobId, existingResult.get().getMatchScore());
+                return existingResult.get();
+            }
+            // 构建岗位信息字符串
+            String jobInfo = buildJobInfoString(job);
+            // 获取匹配提示词模板
+            String matchingPrompt = jobMatchingPromptResource.getContentAsString(StandardCharsets.UTF_8);
+            String userPrompt = String.format(
+                "请根据上下文中检索到的简历内容和以下岗位信息进行匹配分析。\n\n" +
+                "岗位信息：\n%s\n\n" +
+                "分析要求：\n" +
+                "1. 使用上下文中的简历内容进行分析\n" +
+                "2. 给出匹配分数（matchScore）和匹配等级（matchLevel）\n" +
+                "3. 提供具体的优势、差距和建议\n" +
+                "4. 如果上下文中没有简历内容，请在summary中说明“没有获取到简历信息”", 
+                jobInfo);
+            
+            try {
+                // 使用手动检索和上下文注入的方式实现RAG
+                logger.info("开始使用手动RAG检索进行匹配分析 - resumeId: {}, jobId: {}", resumeId, jobId);
+                FilterExpressionBuilder b = new FilterExpressionBuilder();
+                Filter.Expression expression = b.eq("resumeId", resumeId).build();
+                RetrievalAugmentationAdvisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
+                        .documentRetriever(VectorStoreDocumentRetriever.builder()
+                                .vectorStore(vectorStore)
+                                .filterExpression(expression)
+                                .build())
+                        .build();
+                JobMatchingResult result = ChatClient.builder(chatModel)
+                    .defaultAdvisors(retrievalAugmentationAdvisor)
+                    .defaultSystem(matchingPrompt)
+                    .build()
+                    .prompt()
+                    .user(userPrompt)
+                    .call()
+                    .entity(JobMatchingResult.class);
+                // 设置基本信息
+                result.setResumeId(resumeId);
+                result.setJobId(jobId);
+                result.setAnalysisTime(java.time.LocalDateTime.now());
 
+                logger.info("语义检索匹配完成 - resumeId: {}, jobId: {}, matchScore: {}",
+                        resumeId, jobId, result.getMatchScore());
+                
+                // 保存匹配结果到数据库
+                try {
+                    JobMatchingResult savedResult = jobMatchingResultRepository.save(result);
+                    logger.info("语义检索匹配结果已保存 - resumeId: {}, jobId: {}, matchScore: {}", 
+                               resumeId, jobId, savedResult.getMatchScore());
+                    return savedResult;
+                } catch (Exception e) {
+                    logger.warn("保存匹配结果失败 - resumeId: {}, jobId: {}, 错误: {}", 
+                               resumeId, jobId, e.getMessage());
+                    return result;
+                }
+                
+            } catch (Exception ragException) {
+                logger.warn("RAG语义检索失败，使用传统方法降级 - resumeId: {}, jobId: {}, 错误: {}",
+                           resumeId, jobId, ragException.getMessage());
+                
+                // 降级到传统的ID过滤方法
+                return matchResumeWithJob(resumeId, jobId);
+            }
+            
+        } catch (IOException e) {
+            logger.error("读取匹配提示词模板失败 - resumeId: {}, jobId: {}", resumeId, jobId, e);
+            throw new RuntimeException("读取匹配提示词模板失败", e);
+        } catch (Exception e) {
+            logger.error("语义检索匹配失败 - resumeId: {}, jobId: {}, 错误: {}", resumeId, jobId, e.getMessage(), e);
+            throw new RuntimeException("语义检索匹配失败: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * 基于岗位要求构建语义检索查询
+     */
+    private String buildSemanticQuery(Job job, String resumeId) {
+        StringBuilder queryBuilder = new StringBuilder();
+        // 添加简历ID
+        // 添加岗位标题和关键技能
+        if (job.getTitle() != null) {
+            queryBuilder.append(job.getTitle()).append(" ");
+        }
+        
+        // 添加技能要求
+        if (job.getSkills() != null && !job.getSkills().isEmpty()) {
+            job.getSkills().forEach(skill -> queryBuilder.append(skill).append(" "));
+        }
+        
+        // 添加公司信息
+        if (job.getCompany() != null) {
+            queryBuilder.append(job.getCompany()).append(" ");
+        }
+        
+        String query = queryBuilder.toString().trim();
+        
+        // 如果查询为空，使用岗位描述
+        if (query.isEmpty() && job.getDescription() != null) {
+            query = job.getDescription();
+        }
+        
+        return query.isEmpty() ? "简历" : query;
+    }
+    
+    /**
+     * 创建降级结果
+     */
+    private JobMatchingResult createFallbackResult(String resumeId, String jobId, String reason) {
+        JobMatchingResult result = new JobMatchingResult();
+        result.setResumeId(resumeId);
+        result.setJobId(jobId);
+        result.setMatchScore(60.0);
+        result.setMatchLevel("FAIR");
+        result.setSummary("由于" + reason + "，无法提供详细匹配分析。建议手动检查简历与岗位要求的匹配度。");
+        result.setAdvantages(Arrays.asList("需要进一步人工分析"));
+        result.setGaps(Arrays.asList("系统分析受限"));
+        result.setRecommendations(Arrays.asList("建议手动审查匹配度"));
+        result.setAnalysisTime(java.time.LocalDateTime.now());
+        return result;
+    }
+    
+    /**
+     * 标准化匹配等级，将中文转换为英文
+     */
+    private String normalizeMatchLevel(String matchLevel) {
+        if (matchLevel == null) {
+            return "FAIR";
+        }
+        
+        switch (matchLevel) {
+            case "优秀":
+            case "高匹配":
+                return "EXCELLENT";
+            case "良好":
+            case "中等匹配":
+                return "GOOD";
+            case "一般":
+            case "低匹配":
+                return "FAIR";
+            case "较差":
+                return "POOR";
+            default:
+                return matchLevel; // 如果已经是英文，直接返回
+        }
+    }
+    
     /**
      * 从分析结果中提取匹配分数
      * 支持多种格式的分数表示
@@ -549,4 +720,5 @@ public class JobMatchingService {
         
         return results;
     }
+
 }

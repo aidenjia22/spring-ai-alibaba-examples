@@ -16,6 +16,9 @@
 
 package com.alibaba.cloud.ai.example.rag.model;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * 岗位状态枚举
  * 
@@ -42,6 +45,15 @@ public enum JobStatus {
 
     JobStatus(String description) {
         this.description = description;
+    }
+
+    @JsonCreator
+    public static JobStatus fromString(String value) {
+        try {
+            return JobStatus.valueOf(value.toUpperCase());
+        } catch (Exception e) {
+            return ACTIVE; // 默认值
+        }
     }
 
     public String getDescription() {

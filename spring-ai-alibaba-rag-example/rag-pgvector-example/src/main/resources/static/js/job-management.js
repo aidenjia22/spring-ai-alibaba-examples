@@ -509,31 +509,17 @@ async function getJobById(jobId) {
 
 // 添加岗位
 async function addJob(jobData) {
-    return await apiCall(`${API_BASE}/jobs`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(jobData)
-    });
+    return await apiCall(`${API_BASE}/jobs`, 'POST', jobData);
 }
 
 // 更新岗位
 async function updateJob(jobId, jobData) {
-    return await apiCall(`${API_BASE}/jobs/${jobId}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(jobData)
-    });
+    return await apiCall(`${API_BASE}/jobs/${jobId}`, 'PUT', jobData);
 }
 
 // 删除岗位
 async function deleteJob(jobId) {
-    return await apiCall(`${API_BASE}/jobs/${jobId}`, {
-        method: 'DELETE'
-    });
+    return await apiCall(`${API_BASE}/jobs/${jobId}`, 'DELETE');
 }
 
 // 点击模态框外部关闭

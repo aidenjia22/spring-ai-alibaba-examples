@@ -134,7 +134,7 @@ public class ResumeAnalysisService {
             // 5. 使用RAG进行简历分析
             ResumeAnalysis analysis = ChatClient.builder(chatModel)
                 .defaultAdvisors(new RetrievalRerankAdvisor(vectorStore, rerankModel, searchRequest, 
-                    new SystemPromptTemplate(analysisPrompt), 0.1))
+                    new SystemPromptTemplate(analysisPrompt), 0.5))
                 .build()
                 .prompt()
                 .user("请对这份简历进行全面分析，按照JSON格式返回结构化的分析结果")
@@ -147,6 +147,7 @@ public class ResumeAnalysisService {
 
             // 7. 保存分析结果到数据库
             logger.info("开始保存分析结果到数据库 - resumeId: {}", resumeId);
+            analysis.setResumeId(resumeId);
             ResumeAnalysis savedAnalysis = resumeAnalysisRepository.save(analysis);
 
             // 8. 更新简历状态
@@ -297,13 +298,4 @@ public class ResumeAnalysisService {
         return resumeAnalysisRepository.findByResumeId(resumeId).orElse(null);
     }
 
-    /**
-     * 检查分析结果是否存在
-     * 
-     * @param resumeId 简历ID
-     * @return 是否存在
-     */
-    public boolean hasAnalysisResult(String resumeId) {
-        return resumeAnalysisRepository.existsByResumeId(resumeId);
-    }
 }
