@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.SystemPromptTemplate;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
@@ -112,16 +114,15 @@ public class ResumeAnalysisService {
                 logger.info("返回已存在的分析结果 - resumeId: {}", resumeId);
                 return existingAnalysis.get();
             }
-
-            // 3. 构建搜索请求，获取完整简历内容
             FilterExpressionBuilder builder = new FilterExpressionBuilder();
             Filter.Expression filter = builder.eq("resumeId", resumeId).build();
-            
-            SearchRequest searchRequest = SearchRequest.builder()
-                .topK(20)  // 获取更多文档片段确保完整性
-                .similarityThreshold(0.1)  // 较低阈值，确保获取完整简历内容
-                .filterExpression(filter)
-                .build();
+
+            RetrievalAugmentationAdvisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
+                    .documentRetriever(VectorStoreDocumentRetriever.builder()
+                            .vectorStore(vectorStore)
+                            .filterExpression(filter)
+                            .build())
+                    .build();
 
             logger.info("开始检索简历文档 - resumeId: {}", resumeId);
 
@@ -133,11 +134,10 @@ public class ResumeAnalysisService {
 
             // 5. 使用RAG进行简历分析
             ResumeAnalysis analysis = ChatClient.builder(chatModel)
-                .defaultAdvisors(new RetrievalRerankAdvisor(vectorStore, rerankModel, searchRequest, 
-                    new SystemPromptTemplate(analysisPrompt), 0.5))
+                .defaultAdvisors(retrievalAugmentationAdvisor)
                 .build()
                 .prompt()
-                .user("请对这份简历进行全面分析，按照JSON格式返回结构化的分析结果")
+                .user("请对这份简历进行全面分析")
                 .call()
                 .entity(ResumeAnalysis.class);
             
@@ -285,6 +285,17 @@ public class ResumeAnalysisService {
             analysis.setSummary("分析完成：" + analysisResult);
             return analysis;
         }
+    }
+
+    /**
+     * 删除简历分析结果
+     *
+     * @param resumeId 简历ID
+     *
+     */
+    public void deleteAnalysis(String resumeId) {
+        logger.info("删除简历分析结果 - resumeId: {}", resumeId);
+        resumeAnalysisRepository.deleteByResumeId(resumeId);
     }
 
     /**

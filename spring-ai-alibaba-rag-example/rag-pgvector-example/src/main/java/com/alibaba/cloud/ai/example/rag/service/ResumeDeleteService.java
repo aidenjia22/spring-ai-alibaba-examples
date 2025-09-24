@@ -41,13 +41,15 @@ public class ResumeDeleteService {
     private final ResumeRepository resumeRepository;
     private final VectorStore vectorStore;
     private final JdbcTemplate jdbcTemplate;
+    private final ResumeAnalysisService resumeAnalysisService;
 
-    public ResumeDeleteService(ResumeRepository resumeRepository, 
-                             VectorStore vectorStore, 
-                             JdbcTemplate jdbcTemplate) {
+    public ResumeDeleteService(ResumeRepository resumeRepository,
+                               VectorStore vectorStore,
+                               JdbcTemplate jdbcTemplate, ResumeAnalysisService resumeAnalysisService) {
         this.resumeRepository = resumeRepository;
         this.vectorStore = vectorStore;
         this.jdbcTemplate = jdbcTemplate;
+        this.resumeAnalysisService = resumeAnalysisService;
     }
 
     /**
@@ -75,6 +77,9 @@ public class ResumeDeleteService {
             // 2. 删除document_embeddings表中的记录（如果存在）
             logger.info("步骤2: 删除document_embeddings表记录 - resumeId: {}", resumeId);
             deleteDocumentEmbeddings(resumeId);
+
+            resumeAnalysisService.deleteAnalysis(resumeId);
+
 
             // 3. 删除数据库中的简历记录
             // 由于设置了ON DELETE CASCADE，以下表的相关记录会自动删除：
