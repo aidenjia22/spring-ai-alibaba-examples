@@ -20,7 +20,7 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.document.DocumentReader;
 import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
-import org.springframework.ai.transformer.splitter.TokenTextSplitter;
+import com.alibaba.cloud.ai.transformer.splitter.SentenceSplitter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,10 +37,10 @@ import java.util.List;
 @Component
 public class ResumeDocumentProcessor {
 
-    private final TokenTextSplitter textSplitter;
+    private final SentenceSplitter sentenceSplitter;
 
     public ResumeDocumentProcessor() {
-        this.textSplitter = new TokenTextSplitter();
+        this.sentenceSplitter = new SentenceSplitter();
     }
 
     /**
@@ -72,7 +72,7 @@ public class ResumeDocumentProcessor {
         });
         
         // 分割文档
-        return textSplitter.apply(documents);
+        return sentenceSplitter.apply(documents);
     }
 
     /**
@@ -98,7 +98,7 @@ public class ResumeDocumentProcessor {
         document.getMetadata().put("uploadTime", LocalDateTime.now().toString());
         
         // 分割文档
-        return textSplitter.apply(List.of(document));
+        return sentenceSplitter.apply(List.of(document));
     }
 
     /**
